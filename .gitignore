@@ -18,3 +18,13 @@ moc_*.cpp
 qrc_*.cpp
 Makefile
 *-build-*
+
+Text-recognition.suo
+Text-recognition.opensdf
+Text-recognition.sdf
+ipch/*
+Win32/*
+Text-recognition/Debug/*
+Text-recognition/GeneratedFiles/*
+Text-recognition/Release/*
+
