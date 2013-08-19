@@ -14,6 +14,7 @@ public:
 
 private:
 	Ui::AppClass ui;
+
 };
 
 #endif // APP_H
