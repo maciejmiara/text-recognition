@@ -1,5 +1,9 @@
 #include "app.h"
+#include "LetterCropper.h"
 #include <QtWidgets/QApplication>
+#include <qimage.h>
+#include <qimagereader.h>
+#include <qimagewriter.h>
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -22,7 +26,7 @@ void image()
 	Size size(3,3); //dostosowaæ skalê do wielkoœci pliku? 
 	GaussianBlur(img,img,size,0); //zamglenie
     adaptiveThreshold(img, img,255,CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY,75,10); //progowanie
-    bitwise_not(img, img); //kontrast bo cv u¿ywa czarnego jako t³a
+    //bitwise_not(img, img); //kontrast bo cv u¿ywa czarnego jako t³a
  
 	//kopia
 	Mat img2 = img.clone();
@@ -70,6 +74,12 @@ void image()
 int main(int argc, char *argv[])
 {
 	image();
+	QImage img = QImage();
+	if (img.load("training-sets/Y2.jpg"))
+	{
+		QImage cropped = LetterCropper::crop(img);
+		cropped.save("training-sets/testY2.jpg");
+	}
 	QApplication a(argc, argv);
 	App w;
 	w.show();
