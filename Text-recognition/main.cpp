@@ -77,8 +77,9 @@ int main(int argc, char *argv[])
 	QImage img = QImage();
 	if (img.load("training-sets/Y2.jpg"))
 	{
-		QImage cropped = LetterCropper::crop(img);
+		QImage cropped = LetterAnalyzer::crop(img);
 		cropped.save("training-sets/testY2.jpg");
+		LetterAnalyzer::parse(cropped);
 	}
 	QApplication a(argc, argv);
 	App w;

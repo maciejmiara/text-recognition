@@ -88,8 +88,9 @@
     <ClCompile Include="GeneratedFiles\Release\moc_app.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="LetterCropper.cpp" />
+    <ClCompile Include="LetterAnalyzer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="TrainingSet.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="app.h">
@@ -118,7 +119,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GeneratedFiles\ui_app.h" />
-    <ClInclude Include="LetterCropper.h" />
+    <ClInclude Include="globals.h" />
+    <ClInclude Include="LetterAnalyzer.h" />
+    <ClInclude Include="TrainingSet.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="app.qrc">
