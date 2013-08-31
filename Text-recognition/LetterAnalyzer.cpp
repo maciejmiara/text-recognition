@@ -1,6 +1,6 @@
 #include <qimage.h>
 #include <qrgb.h>
-#include "LetterCropper.h"
+#include "LetterAnalyzer.h"
 #include "globals.h"
 
 QImage LetterAnalyzer::crop(QImage& image)

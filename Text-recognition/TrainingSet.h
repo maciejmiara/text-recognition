@@ -10,4 +10,4 @@ class TrainingSet
 	public:
 		void insertData(int set, int index, double value);
 		double getData(int set, int index);
-}
+};
