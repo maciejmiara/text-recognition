@@ -9,3 +9,8 @@ double TrainingSet::getData(int set, int index)
 {
 	return data[set][index];
 }
+
+double* TrainingSet::getSet(int set)
+{
+	return data[set];
+}
