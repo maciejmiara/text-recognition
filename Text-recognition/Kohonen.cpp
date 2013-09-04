@@ -16,7 +16,7 @@ void Kohonen::generateWeights()
 
 	for (int i = 0; i < NEURONS_OUTPUT; i++)
 		for (int j = 0; j < NEURONS_INPUT; j++)
-			outWeights[i][j] = qrand() * qrand() / qrand() / qrand();
+			outWeights[i][j] = qrand() + qrand() - qrand() - qrand();
 }
 
 double Kohonen::vectorLength(int amount, double* vector)
@@ -36,7 +36,7 @@ double Kohonen::normalizeVector(int amount, double* vector)
 	double length = vectorLength(amount, vector);
 
 	if (length*length < 1.e-30) {
-		length = 1.e-30/1.e-30;
+		length = sqrt(1.e-30);
 	}
 
 	return 1.0 / length;
@@ -82,23 +82,25 @@ double Kohonen::calculateError(TrainingSet* set, int* winners, double** correcti
 	double difference = 0.0;
 	double normalizationFactor = 0.0;
 	int winner = 0;
+	for (int i = 0; i < NEURONS_OUTPUT; i++)
+		winners[i] = 0;
 
 	for (int i = 0; i < NEURONS_OUTPUT; i++)
 	{
-		//winner = pickWinner(TrainingSet* sets, int set, double &normalizationFactor); 
+		winner = pickWinner(set, i, normalizationFactor); 
 		++winners[winner];
 		errorVectorLength = 0.0;
 
 		for (int j = 0; j < NEURONS_INPUT; j++)
 		{
-			difference = set->getData(i, j) * normalizationFactor - outWeights[winner][i];
-			corrections[winner][i] += difference;
-			errorVector[i] = difference;
+			difference = set->getData(i, j) * normalizationFactor - outWeights[winner][j];
+			corrections[winner][j] += difference;
+			errorVector[j] = difference;
 		}
 
 		errorVectorLength = vectorLength(NEURONS_INPUT, errorVector);
 
-		if (errorVectorLength > biggestError)
+		if (errorVectorLength*errorVectorLength > biggestError)
 			biggestError = errorVectorLength;
 	}
 
@@ -115,11 +117,19 @@ int Kohonen::pickWinner(TrainingSet* sets, int set, double& normalizationFactor)
 	{
 		output[i] = dotProduct(NEURONS_INPUT, sets->getSet(set), outWeights[i]) * normalizationFactor;
 
+		output[i] = 0.5 * (output[i] + 1.0) ;
+
 		if (output[i] > best)
 		{
 			best = output[i];
 			winner = i;
 		}
+
+		// account for rounding
+      if ( output[i] > 1.0 )
+         output[i] = 1.0;
+      if ( output[i] < 0.0 )
+         output[i] = 0.0;
 	}
 
 	return winner;
@@ -159,11 +169,11 @@ void Kohonen::pickUniqueWinner(TrainingSet* set, int* winners)
 		
 	}
 
-	memcpy(set->getSet(bestMatch), bestMatchSet, NEURONS_INPUT * sizeof(double));
-	normalizeWeights(NEURONS_INPUT, set->getSet(bestMatch));
+	memcpy(outWeights[bestMatch], bestMatchSet, NEURONS_INPUT * sizeof(double));
+	normalizeWeights(NEURONS_INPUT, outWeights[bestMatch]);
 }
 
-double Kohonen::adjustWeights(int* winners, double** corrections)
+double Kohonen::adjustWeights(double rate, int* winners, double** corrections)
 {
 	double biggestCorrection = 0.0;
 	double correction = 0.0;
@@ -174,7 +184,7 @@ double Kohonen::adjustWeights(int* winners, double** corrections)
 	{
 		if (winners[i] == 0)
 			continue;
-		factor = 1.0 / (double) winners[i] * LEARN_RATE;
+		factor = 1.0 / (double) winners[i] * rate;
 
 		for (int j = 0; j < NEURONS_INPUT; j++)
 		{
@@ -187,7 +197,7 @@ double Kohonen::adjustWeights(int* winners, double** corrections)
 			biggestCorrection = length;
 	}
 
-	return sqrt(biggestCorrection) / LEARN_RATE;
+	return sqrt(biggestCorrection) / rate;
 }
 
 bool Kohonen::learn(TrainingSet* set)
@@ -201,8 +211,10 @@ bool Kohonen::learn(TrainingSet* set)
 
 	corrections = new double*[NEURONS_OUTPUT];
 
-	for (int i = 0; i < NEURONS_OUTPUT; i++)
+	for (int i = 0; i < NEURONS_OUTPUT; i++) {
 		corrections[i] = new double[NEURONS_INPUT];
+		winners[i] = 0;
+	}
 
 	error = 1.0;
 	for (int i = 0; i < NEURONS_OUTPUT; i++)
@@ -222,8 +234,9 @@ bool Kohonen::learn(TrainingSet* set)
 			memcpy(tempOutWeights, outWeights, NEURONS_OUTPUT * NEURONS_INPUT * sizeof(double));
 		}
 
-		for (int i = 0; i < NEURONS_OUTPUT; i++)
-			if (winners[i] != 0)
+		winnersAmount = 0;
+		for (int j = 0; j < NEURONS_OUTPUT; j++)
+			if (winners[j] != 0)
 				winnersAmount++;
 
 		if (error < QUIT_ERROR)
@@ -235,7 +248,7 @@ bool Kohonen::learn(TrainingSet* set)
 			continue;
 		}
 
-		double bestCorrection = adjustWeights(winners, corrections);
+		double bestCorrection = adjustWeights(rate, winners, corrections);
 
 		if (bestCorrection < 1.e-5)
 		{
@@ -243,6 +256,7 @@ bool Kohonen::learn(TrainingSet* set)
 				break;
 
 			init();
+			rate = LEARN_RATE;
 			continue;
 		}
 
@@ -275,4 +289,9 @@ void Kohonen::createMap(TrainingSet* set)
 		winner = pickWinner(set, i, normalizationFactor);
 		neuronsMap[winner] = i;
 	}
+}
+
+int* Kohonen::getMap()
+{
+	return neuronsMap;
 }

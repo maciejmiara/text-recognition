@@ -5,10 +5,11 @@
 class TrainingSet
 {
 	private:
-		double data[NEURONS_OUTPUT][NEURONS_INPUT];
+		double data[INPUT_DATA][NEURONS_INPUT];
 
 	public:
 		void insertData(int set, int index, double value);
+		void insertSet(int set, double* data);
 		double getData(int set, int index);
 		double* getSet(int set);
 };

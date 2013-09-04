@@ -23,7 +23,8 @@ class Kohonen
 		double calculateError(TrainingSet* set, int* winners, double** corrections);
 		int pickWinner(TrainingSet* sets, int set, double& normalizationFactor);
 		void pickUniqueWinner(TrainingSet* set, int* winners);
-		double adjustWeights(int* winners, double** corrections);
+		double adjustWeights(double rate, int* winners, double** corrections);
 		bool learn(TrainingSet* set);
 		void createMap(TrainingSet* set);
+		int* getMap();
 };

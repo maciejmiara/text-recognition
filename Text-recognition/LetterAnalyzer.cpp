@@ -69,18 +69,18 @@ QImage LetterAnalyzer::crop(QImage& image)
 	return image.copy(leftMargin, topMargin, rightMargin - leftMargin + 1, bottomMargin - topMargin + 1); 
 }
 
-float* LetterAnalyzer::parse(QImage& image)
+double* LetterAnalyzer::parse(QImage& image)
 {
-	float* dataVector = new float[NEURONS_NUM];
+	double* dataVector = new double[NEURONS_NUM];
 
 	if (image.height() < NEURONS_VERTICAL || image.width() < NEURONS_HORIZONTAL)
 	{
 		image = image.scaled(NEURONS_HORIZONTAL, NEURONS_VERTICAL, Qt::KeepAspectRatio);
 	}
 
-	float verticalPartSize = image.height() / (float)NEURONS_VERTICAL;
-	float horizontalPartSize = image.width() / (float)NEURONS_HORIZONTAL;
-	float tester;
+	double verticalPartSize = image.height() / (double)NEURONS_VERTICAL;
+	double horizontalPartSize = image.width() / (double)NEURONS_HORIZONTAL;
+	double tester;
 	for (int i = 0; i < NEURONS_VERTICAL; i++)
 		for (int j = 0; j < NEURONS_HORIZONTAL; j++)
 		{
