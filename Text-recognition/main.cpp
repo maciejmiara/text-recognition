@@ -68,7 +68,7 @@ void extractContours(Mat& image,vector< vector<Point> > contours_poly)
 		stringstream file;
 		
 		char ch = (char)(i+65); 
-        file<<"letters/"<<ch<<6<<".jpg";
+        file<<"letters/"<<ch<<8<<".jpg";
         imwrite(file.str(),resizedPic);
 
  
