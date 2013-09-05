@@ -4,6 +4,7 @@
 #include <qimage.h>
 #include <qimagereader.h>
 #include <qimagewriter.h>
+#include <qfile.h>
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -205,7 +206,126 @@ int main(int argc, char *argv[])
 {
 	image();
 	QImage img = QImage();
+
 	if (img.load("training-sets/Y2.jpg"))
+
+
+	TrainingSet set = TrainingSet();
+	TrainingSet set2 = TrainingSet();
+	TrainingSet set3 = TrainingSet();
+	TrainingSet set4 = TrainingSet();
+	
+	int j = 0;
+
+	QFile file("input_data.txt");
+	file.open(QIODevice::WriteOnly | QIODevice::Text);
+
+	for (int i = 0; i < 26; i++)
+	{
+		if (img.load(letters[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set.insertSet(i, analyzed);
+			file.write(letters[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+					
+			//j++;
+		}
+
+		if (img.load(letters2[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set2.insertSet(i, analyzed);
+			file.write(letters2[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+		}
+
+		if (img.load(letters3[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set3.insertSet(i, analyzed);
+			file.write(letters3[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+		}
+
+		if (img.load(letters4[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set4.insertSet(i, analyzed);
+			file.write(letters4[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+		}
+	}
+
+	file.close();
+
+/*	TrainingSet trainingSets[4];
+	trainingSets[0] = set;
+	trainingSets[1] = set2;
+	trainingSets[2] = set3;
+	trainingSets[3] = set4;*/
+
+	Kohonen network = Kohonen();
+/*	network.init();*/
+	network.learn(&set);
+/*	network.learn(&set2);
+	network.learn(&set3);
+	network.learn(&set4);*/
+	double normalizationFactor = 0.0;
+	if (img.load("training-sets/P4.jpg"))
+>>>>>>> 06ced22c994f8715de75ebe96118f83d5d8a3c70
 	{
 		QImage cropped = LetterAnalyzer::crop(img);
 		cropped.save("training-sets/testY2.jpg");
