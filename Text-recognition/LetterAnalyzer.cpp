@@ -73,22 +73,40 @@ double* LetterAnalyzer::parse(QImage& image)
 {
 	double* dataVector = new double[NEURONS_NUM];
 
-	if (image.height() < NEURONS_VERTICAL || image.width() < NEURONS_HORIZONTAL)
+	if (image.height() < NEURONS_VERTICAL)
 	{
-		image = image.scaled(NEURONS_HORIZONTAL, NEURONS_VERTICAL, Qt::KeepAspectRatio);
+		image = image.scaledToHeight(NEURONS_VERTICAL);
+		//image.save("training-sets/scaled/test.jpg");
+	}
+
+	if (image.width() < NEURONS_HORIZONTAL)
+	{
+		image = image.scaledToWidth(NEURONS_HORIZONTAL);
+		image.save("training-sets/scaled/test.jpg");
 	}
 
 	double verticalPartSize = image.height() / (double)NEURONS_VERTICAL;
 	double horizontalPartSize = image.width() / (double)NEURONS_HORIZONTAL;
 	double tester;
+	double topPoint = 0.0;
+	double leftPoint = 0.0;
+	double width = (double)image.width() / (double)NEURONS_HORIZONTAL;
+	double height = (double)image.height() / (double)NEURONS_VERTICAL;
 	for (int i = 0; i < NEURONS_VERTICAL; i++)
+	{
 		for (int j = 0; j < NEURONS_HORIZONTAL; j++)
 		{
-			dataVector[i*NEURONS_HORIZONTAL+j] = (LetterAnalyzer::isPieceofLetter(image, j*horizontalPartSize, i*verticalPartSize, horizontalPartSize, verticalPartSize)) ? MAX_INPUT : MIN_INPUT;
+			dataVector[i*NEURONS_HORIZONTAL+j] = (LetterAnalyzer::isPieceofLetter(image, (int)leftPoint, (int)topPoint, (int)width, (int)height)) ? MAX_INPUT : MIN_INPUT;
 			tester = dataVector[i*NEURONS_HORIZONTAL+j];
 			int tester1 = j*horizontalPartSize;
 			int tester2 = i*verticalPartSize;
-		}	
+
+			leftPoint += width;
+			
+		}
+		leftPoint = 0.0;
+		topPoint += height;
+	}
 
 	int test = 0;
 	return dataVector;

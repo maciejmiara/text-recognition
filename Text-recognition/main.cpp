@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
 			QImage cropped = LetterAnalyzer::crop(img);
 			//cropped.save(letters[i]);
 			double* analyzed = LetterAnalyzer::parse(cropped);
-			set2.insertSet(i, analyzed);
+			set2.insertSet(j, analyzed);
 			file.write(letters2[i].toLocal8Bit());
 			file.write("\n");
 			for (int j = 0; j < NEURONS_VERTICAL; j++)
@@ -292,6 +292,7 @@ int main(int argc, char *argv[])
 					else
 						file.write("0");
 				}
+				j++;
 				file.write("\n");
 			}
 		}
@@ -301,7 +302,7 @@ int main(int argc, char *argv[])
 			QImage cropped = LetterAnalyzer::crop(img);
 			//cropped.save(letters[i]);
 			double* analyzed = LetterAnalyzer::parse(cropped);
-			set3.insertSet(i, analyzed);
+			set2.insertSet(j, analyzed);
 			file.write(letters3[i].toLocal8Bit());
 			file.write("\n");
 			for (int j = 0; j < NEURONS_VERTICAL; j++)
@@ -313,6 +314,7 @@ int main(int argc, char *argv[])
 					else
 						file.write("0");
 				}
+				j++;
 				file.write("\n");
 			}
 		}
@@ -349,15 +351,16 @@ int main(int argc, char *argv[])
 
 	Kohonen network = Kohonen();
 /*	network.init();*/
-	network.learn(&set);
-/*	network.learn(&set2);
-	network.learn(&set3);
+//	network.learn(&set);
+	network.learn(&set2);
+/*	network.learn(&set3);
 	network.learn(&set4);*/
 	double normalizationFactor = 0.0;
-	if (img.load("training-sets/P4.jpg"))
+	if (img.load("img/testZ.jpg"))
 	{
 		QImage cropped = LetterAnalyzer::crop(img);
 		set.insertSet(0, LetterAnalyzer::parse(cropped));
+		cropped.save("training-sets/test/B1.jpg");
 	}
 
 	int winner = network.pickWinner(&set, 0, normalizationFactor);

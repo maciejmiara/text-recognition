@@ -85,7 +85,7 @@ double Kohonen::calculateError(TrainingSet* set, int* winners, double** correcti
 	for (int i = 0; i < NEURONS_OUTPUT; i++)
 		winners[i] = 0;
 
-	for (int i = 0; i < NEURONS_OUTPUT; i++)
+	for (int i = 0; i < INPUT_DATA; i++)
 	{
 		winner = pickWinner(set, i, normalizationFactor); 
 		++winners[winner];
@@ -142,7 +142,7 @@ void Kohonen::pickUniqueWinner(TrainingSet* set, int* winners)
 	int winner = 0;
 	int bestMatch = 0;
 
-	for (int i = 0; i < NEURONS_OUTPUT; i++)
+	for (int i = 0; i < INPUT_DATA; i++)
 	{
 		winner = pickWinner(set, i, normalizationFactor);
 		if (output[winner] < distance)
