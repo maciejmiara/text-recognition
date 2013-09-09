@@ -18,17 +18,17 @@ using namespace std;
 
 void cut_letters(Mat image)
 {
-	int width = 38;
+	int width = 34;
 	for (int i=0;i<26;i++)
 	{
-		Rect myROI(width*i, 0, width, 38);
+		Rect myROI(width*i, 0, width, 35);
 		Mat croppedImage;
 		Mat(image, myROI).copyTo(croppedImage);
 		
 		stringstream file;
 		
 		char ch = (char)(i+65); 
-        file<<"letters/"<<ch<<"10.jpg";
+        file<<"letters/"<<ch<<"15.jpg";
         imwrite(file.str(),croppedImage);
 	}
 	

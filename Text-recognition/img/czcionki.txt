@@ -8,3 +8,7 @@ Cambria
 Bell MT
 Goudy Old Style
 Lucida Bright
+MS Gothic
+NSimSun
+PMingLiU
+Rockwell
