@@ -2,7 +2,9 @@ Times New Roman
 Arial
 Calibri
 Book Antiqua
+Georgia
 Bookman Old Style
 Cambria
 Bell MT
-Georgia
+Goudy Old Style
+Lucida Bright

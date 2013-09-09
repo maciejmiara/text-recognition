@@ -15,6 +15,24 @@
 using namespace cv;
 using namespace std;
 
+
+void cut_letters(Mat image)
+{
+	int width = 38;
+	for (int i=0;i<26;i++)
+	{
+		Rect myROI(width*i, 0, width, 38);
+		Mat croppedImage;
+		Mat(image, myROI).copyTo(croppedImage);
+		
+		stringstream file;
+		
+		char ch = (char)(i+65); 
+        file<<"letters/"<<ch<<"10.jpg";
+        imwrite(file.str(),croppedImage);
+	}
+	
+}
 int main(int argc, char *argv[])
 {
 
@@ -177,10 +195,10 @@ int main(int argc, char *argv[])
 
 	
 	Mat image = imread("img/Bookman_Old_Style.jpg",0);  //dodaæ zabezpieczenia: co jak nie siê plik Ÿle otworzy
-
+	cut_letters(image);
 	
-	Contour cont;
-	cont.getContour(image);
+//	Contour cont;
+//	cont.getContour(image);
 
 	QApplication a(argc, argv);
 	App w;
