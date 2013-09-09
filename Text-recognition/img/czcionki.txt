@@ -12,3 +12,7 @@ MS Gothic
 NSimSun
 PMingLiU
 Rockwell
+SimHei
+Tahoma
+Microsoft New Tai Lue
+Plantagenet Cherokee
