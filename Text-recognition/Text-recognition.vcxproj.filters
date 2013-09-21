@@ -59,6 +59,9 @@
     <ClCompile Include="Network.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="contour.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="app.h">
@@ -85,6 +88,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Network.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="contour.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
