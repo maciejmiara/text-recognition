@@ -19,6 +19,7 @@ public:
 	void readAndPrepareTrainingSetsInfo();
 	void initTrainingLetters();
 	void randomizeTrainingSet();
+	void testNetwork();
 
 private:
 	Ui::AppClass ui;
@@ -30,6 +31,7 @@ private:
 	QString imageFile;
 	QString resultFile;
 	TrainingSet trainingSet;
+	int testResults[TEST_DATA];
 
 public slots:
 	void readWeights();

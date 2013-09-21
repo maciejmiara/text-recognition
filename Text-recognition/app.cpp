@@ -82,6 +82,22 @@ void App::readAndPrepareTrainingSetsInfo()
 	}
 }
 
+void App::testNetwork()
+{
+	QDir trainingDir("test-sets");
+	testFilesList = trainingDir.entryList(QStringList("*.jpg"));
+	QImage img;
+	QImage cropped;
+
+	for (int i = 0; i < TEST_DATA; i++)
+	{
+		bool test = img.load("test-sets/" + testFilesList[i]);
+		cropped = LetterAnalyzer::crop(img);
+		double* analyzed = LetterAnalyzer::parse(cropped);
+		testResults[i] =  network.recognize(analyzed);
+	}
+}
+
 void App::readWeights()
 {
 	QFile file("weights.txt");
@@ -136,6 +152,7 @@ void App::learn()
 {
 	readAndPrepareTrainingSetsInfo();
 	network.learn(INPUT_DATA, &trainingSet, trainingLetters);
+	testNetwork();
 	networkTrained = true;
 }
 

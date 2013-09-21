@@ -216,6 +216,7 @@ void Network::learn(int amount, TrainingSet* set, int* expectedResults)
 	
 	double iterationError = 0.0;
 	double epochError = 0.0;
+	double minEpochError = 1.0;
 
 	// 400 epok, po 200 prezentacji ka¿dej próbki w danej epoce
 	for (int i = 0; i < MAX_LEARNING_EPOCHS; i++)
@@ -233,6 +234,9 @@ void Network::learn(int amount, TrainingSet* set, int* expectedResults)
 			}
 		epochError = sqrt(iterationError/(double)(amount * neuronsInLayer[LAYERS_NUM - 1]));
 		iterationError = 0.0;
+
+		if (epochError < minEpochError)
+			minEpochError = epochError;
 
 		if (epochError < QUIT_ERROR)
 			break;
