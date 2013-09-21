@@ -50,8 +50,7 @@ void Contour::extractContours(Mat& image,vector< vector<Point> > contours_poly)
         //zapisywanie
 		stringstream file;
 		
-		char ch = (char)(i+65); 
-        file<<"letters/"<<ch<<8<<".jpg";
+		file<<"letters/"<<(i+1)<<".jpg";
         imwrite(file.str(),resizedPic);
 
  

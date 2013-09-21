@@ -16,22 +16,6 @@ using namespace cv;
 using namespace std;
 
 
-void cut_letters(Mat image)
-{
-	int width = 35;
-	for (int i=0;i<26;i++)
-	{
-		Rect myROI(width*i, 0, width, 40);
-		Mat croppedImage;
-		Mat(image, myROI).copyTo(croppedImage);
-		
-		stringstream file;
-		
-		char ch = (char)(i+65); 
-        file<<"letters/"<<ch<<"20.jpg";
-        imwrite(file.str(),croppedImage);
-	}
-}
 
 int main(int argc, char *argv[])
 {
@@ -400,11 +384,13 @@ int main(int argc, char *argv[])
 		}
 	}
 	letters[0];
-	//Mat image = imread("img/Bookman_Old_Style.jpg",0);  //dodaæ zabezpieczenia: co jak nie siê plik Ÿle otworzy
-	//cut_letters(image);
-*/	
-//	Contour cont;
-//	cont.getContour(image);
+*/
+	//pobieranie pliku do czytania
+	//poszczególny literki zostaną zapisane w fodlerze "letters" jako numerLiterki.jpg czyli "1.jpg", "2.jpg", itd.
+	//Numeracja zaczyna się od "1".
+	Mat image = imread("img/page1.jpg",0);  //dodać zabezpieczenia: co jak nie się plik źle otworzy?
+	Contour cont;
+	cont.getContour(image);
 	QApplication a(argc, argv);
 	App w;
 	w.init();
