@@ -5,16 +5,36 @@
 #include <qglobal.h>
 #include <qfile.h>
 #include <qtextstream.h>
+#include <qfiledialog.h>
+#include "LetterAnalyzer.h"
 
 App::App(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
+	networkTrained = false;
 }
 
 App::~App()
 {
 
+}
+
+void App::init()
+{
+	ui.recognize->setEnabled(false);
+	ui.saveWeights->setEnabled(false);
+	connectEverything();
+}
+
+void App::connectEverything()
+{
+	connect(ui.loadImage, SIGNAL(clicked()), this, SLOT(getImagePath()));
+	connect(ui.loadResult, SIGNAL(clicked()), this, SLOT(getResultPath()));
+	connect(ui.loadWeights, SIGNAL(clicked()), this, SLOT(readWeights()));
+	connect(ui.saveWeights, SIGNAL(clicked()), this, SLOT(saveWeights()));
+	connect(ui.recognize, SIGNAL(clicked()), this, SLOT(recognize()));
+	connect(ui.learn, SIGNAL(clicked()), this, SLOT(learn()));
 }
 
 void App::initTrainingLetters()
@@ -44,13 +64,22 @@ void App::randomizeTrainingSet()
 	}
 }
 
-QStringList App::readAndPrepareTrainingSetsInfo()
+void App::readAndPrepareTrainingSetsInfo()
 {
 	initTrainingLetters();
 	QDir trainingDir("training-sets");
 	trainingFilesList = trainingDir.entryList(QStringList("*.jpg"));
 	randomizeTrainingSet();
-	return trainingFilesList;
+	QImage img;
+	QImage cropped;
+
+	for (int i = 0; i < INPUT_DATA; i++)
+	{
+		img.load(trainingFilesList[i]);
+		cropped = LetterAnalyzer::crop(img);
+		double* analyzed = LetterAnalyzer::parse(cropped);
+		trainingSet.insertSet(i, analyzed);
+	}
 }
 
 void App::readWeights()
@@ -71,6 +100,11 @@ void App::readWeights()
 				QString line = in.readLine();
 				network.getWeights()[i][j][k] = line.toDouble();
 			}
+
+	if (!ui.saveWeights->isEnabled())
+		ui.saveWeights->setEnabled(true);
+
+	networkTrained = true;
 }
 
 void App::saveWeights()
@@ -91,4 +125,32 @@ void App::saveWeights()
 				file.write("\n");
 			}
 
+}
+
+void App::recognize()
+{
+
+}
+
+void App::learn()
+{
+	readAndPrepareTrainingSetsInfo();
+	network.learn(INPUT_DATA, &trainingSet, trainingLetters);
+	networkTrained = true;
+}
+
+void App::getImagePath()
+{
+	imageFile = QFileDialog::getOpenFileName(this, "Open file", "", "Image Files(*.jpg)");
+	ui.imagePath->setText(imageFile);
+	if (!ui.recognize->isEnabled() && !resultFile.isEmpty() && networkTrained)
+		ui.recognize->setEnabled(true);
+}
+
+void App::getResultPath()
+{
+	resultFile = QFileDialog::getOpenFileName(this, "Open file", "", "Text Files(*.txt)");
+	ui.resultPath->setText(resultFile);
+	if (!ui.recognize->isEnabled() && !imageFile.isEmpty() && networkTrained)
+		ui.recognize->setEnabled(true);
 }

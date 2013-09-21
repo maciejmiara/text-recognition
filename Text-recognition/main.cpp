@@ -407,7 +407,7 @@ int main(int argc, char *argv[])
 //	cont.getContour(image);
 	QApplication a(argc, argv);
 	App w;
-	w.readAndPrepareTrainingSetsInfo();
+	w.init();
 	w.show();
 	return a.exec();
 }

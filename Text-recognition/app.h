@@ -14,11 +14,11 @@ public:
 	App(QWidget *parent = 0);
 	~App();
 
-	QStringList readAndPrepareTrainingSetsInfo();
+	void init();
+	void connectEverything();
+	void readAndPrepareTrainingSetsInfo();
 	void initTrainingLetters();
 	void randomizeTrainingSet();
-	void readWeights();
-	void saveWeights();
 
 private:
 	Ui::AppClass ui;
@@ -26,6 +26,18 @@ private:
 	QStringList trainingFilesList;
 	QStringList testFilesList;
 	int trainingLetters[INPUT_DATA];
+	bool networkTrained;
+	QString imageFile;
+	QString resultFile;
+	TrainingSet trainingSet;
+
+public slots:
+	void readWeights();
+	void saveWeights();
+	void recognize();
+	void learn();
+	void getImagePath();
+	void getResultPath();
 };
 
 #endif // APP_H
