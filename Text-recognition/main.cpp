@@ -1,7 +1,8 @@
 #include "app.h"
 #include "LetterAnalyzer.h"
-//#include "Kohonen.h"
 #include "Network.h"
+//#include "Contour.h"
+#include "TrainingSet.h"
 #include <QtWidgets/QApplication>
 #include <qimage.h>
 #include <qimagereader.h>
@@ -11,202 +12,30 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
-#include <iostream>
-#include <Windows.h>
-
 using namespace cv;
 using namespace std;
 
-class comparator{
-public:
-    bool operator()(vector<Point> c1,vector<Point>c2)
-	{
-		return boundingRect( Mat(c1)).x<boundingRect( Mat(c2)).x;
-	}
-};
 
-void extractContours(Mat& image,vector< vector<Point> > contours_poly)
+void cut_letters(Mat image)
 {
- 
-	//Sortowanie konturów od lewej do prawej wg x
-	sort(contours_poly.begin(),contours_poly.end(),comparator());
- 
-	for( int i = 0; i< contours_poly.size(); i++ )
+	int width = 35;
+	for (int i=0;i<26;i++)
 	{
- 
-        Rect r = boundingRect( Mat(contours_poly[i]) );
-                              
-        Mat mask = Mat::zeros(image.size(), CV_8UC1);
-
-        //Rysowanie maski
-        drawContours(mask, contours_poly, i, Scalar(255), CV_FILLED);
- 
-        //Wyszukiwanie liter z³o¿onych z dwóch znaków, np. "i"
-		if(i+1<contours_poly.size())
-		{
-            Rect r2 = boundingRect( Mat(contours_poly[i+1]) );
-            if(abs(r2.x-r.x)<10)
-			{
-                drawContours(mask, contours_poly, i+1, Scalar(255), CV_FILLED);
-                i++;
-                int minX = min(r.x,r2.x);
-                int minY = min(r.y,r2.y);
-                int maxX =  max(r.x+r.width,r2.x+r2.width);
-                int maxY = max(r.y+r.height,r2.y+r2.height);
-                r = Rect(minX,minY,maxX - minX,maxY-minY);
-			}
-        }
-
-        //wycinanie znaków
-        Mat extractPic;
-                
-        image.copyTo(extractPic,mask);
-        Mat resizedPic = extractPic(r);
-       
-        bitwise_not(resizedPic, resizedPic); //kontrast bo cv u¿ywa czarnego jako t³a
-        //zapisywanie
+		Rect myROI(width*i, 0, width, 40);
+		Mat croppedImage;
+		Mat(image, myROI).copyTo(croppedImage);
+		
 		stringstream file;
 		
 		char ch = (char)(i+65); 
-        file<<"letters/"<<ch<<5<<".jpg";
-        imwrite(file.str(),resizedPic);
-
- 
-    }
-}
-
-void image()
-{
-	
-	//problem z plikami o ma³ej rozdzielczoœci!
-
-
-	Mat img = imread("img/Bookman_Old_Style.jpg",0);  //dodaæ zabezpieczenia: co jak nie siê plik Ÿle otworzy
-
-	//zamiana na czarno-bia³y
-	Size size(3,3); 
-	GaussianBlur(img,img,size,0); //zamglenie
-    adaptiveThreshold(img, img,255,CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY,75,10); //progowanie
-    bitwise_not(img, img); //kontrast bo cv u¿ywa czarnego jako t³a
- 
-	//kopia
-	Mat img2 = img.clone();
- 
-	//wycinamy zbêdne t³o
-
-	vector<Point> points;
-    Mat_<uchar>::iterator it = img.begin<uchar>();
-    Mat_<uchar>::iterator end = img.end<uchar>();
-    for (; it != end; it++)
-       if (*it)
-          points.push_back(it.pos());
-
-    //rysujemy linie pomocnicz¹ do wycinania
-    RotatedRect box = minAreaRect(Mat(points));
- 
-	double angle = box.angle;
-       if (angle < -45.)
-         angle += 90.;
-         
-    Point2f vertices[4];
-    box.points(vertices);
-    for(int i = 0; i < 4; ++i)
-       line(img, vertices[i], vertices[(i + 1) % 4], Scalar(255, 0, 0), 1, CV_AA);
- 
-    Mat rot_mat = getRotationMatrix2D(box.center, angle, 1);
- 
-	//przekszta³cenie afiniczne
-	Mat rotated;
-	warpAffine(img2, rotated, rot_mat, img.size(), INTER_CUBIC);
- 
-	//wycinami œrodek
-	Size box_size = box.size;
-	  if (box.angle < -45.)
-		swap(box_size.width, box_size.height);
-	Mat cropped;
-	getRectSubPix(rotated, box_size, box.center, cropped);
-	//imshow("Wynik", cropped);
-	
-	 Mat cropped2=cropped.clone();
-	cvtColor(cropped2,cropped2,CV_GRAY2RGB);
- 
-	Mat cropped3 = cropped.clone();
-	cvtColor(cropped3,cropped3,CV_GRAY2RGB);
-
-	//imshow("Wynik", cropped3);
-	
-	vector<vector<Point> > contours;
-	vector<Vec4i> hierarchy;
- 
-	//szukanie konturów
-	findContours( cropped, contours, hierarchy,CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
-	
-	///tworzenie z konturów wielok¹tów
-	vector<vector<Point> > contours_poly( contours.size() );
-	vector<Rect> boundRect( contours.size() );
-	vector<Point2f>center( contours.size() );
-	vector<float>radius( contours.size() );
- 
- 
-	//pobieranie konturów wielok¹tów
-	for( int i = 0; i < contours.size(); i++ )
-	{
-		approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
+        file<<"letters/"<<ch<<"20.jpg";
+        imwrite(file.str(),croppedImage);
 	}
- 
- 
-	//pobiera tylko najwa¿niejszych konturów
-	vector<vector<Point> > validContours;
-    for (int i=0;i<contours_poly.size();i++)
-	{
-               
-        Rect r = boundingRect(Mat(contours_poly[i]));
-        if (r.area()<10)
-			continue;
-        bool inside = false;
-        for(int j=0;j<contours_poly.size();j++)
-		{
-                if (j==i)
-					continue;
-                       
-                Rect r2 = boundingRect(Mat(contours_poly[j]));
-                if (r2.area()<10||r2.area()<r.area())
-					continue;
-
-                if(r.x>r2.x && r.x+r.width<r2.x+r2.width && r.y>r2.y && r.y+r.height< r2.y+r2.height)
-				{
-					inside = true;
-                }
-        }
-        if(inside)continue;
-        validContours.push_back(contours_poly[i]);
-    }
- 
- 
-    //pobieranie granic prostok¹tów
-    for(int i=0;i<validContours.size();i++){
-            boundRect[i] = boundingRect( Mat(validContours[i]) );
-    }
- 
- 
-    //wyœwietlanie konturów
-	Scalar color = Scalar(0,255,0);
-	for( int i = 0; i< validContours.size(); i++ )
-		{
-		if(boundRect[i].area()<10)
-			continue;
-		drawContours( cropped2, validContours, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
-		rectangle( cropped2, boundRect[i].tl(), boundRect[i].br(),color, 2, 8, 0 );
-		}
- 
-	extractContours(cropped3,validContours);
-	imshow("title",cropped2);
-
 }
 
 int main(int argc, char *argv[])
 {
-	QString letters[26] = {"training-sets/A1.jpg", "training-sets/B1.jpg", "training-sets/C1.jpg", "training-sets/D1.jpg",
+/*	QString letters[26] = {"training-sets/A1.jpg", "training-sets/B1.jpg", "training-sets/C1.jpg", "training-sets/D1.jpg",
 						   "training-sets/E1.jpg", "training-sets/F1.jpg", "training-sets/G1.jpg", "training-sets/H1.jpg",
 						   "training-sets/I1.jpg", "training-sets/J1.jpg", "training-sets/K1.jpg", "training-sets/L1.jpg",
 						   "training-sets/M1.jpg", "training-sets/N1.jpg", "training-sets/O1.jpg", "training-sets/P1.jpg",
@@ -238,10 +67,66 @@ int main(int argc, char *argv[])
 						   "training-sets/U4.jpg", "training-sets/V4.jpg", "training-sets/W4.jpg", "training-sets/X4.jpg",
 						   "training-sets/Y4.jpg", "training-sets/Z4.jpg"};
 
+	QString letters5[26] = {"training-sets/A5.jpg", "training-sets/B5.jpg", "training-sets/C5.jpg", "training-sets/D5.jpg",
+						   "training-sets/E5.jpg", "training-sets/F5.jpg", "training-sets/G5.jpg", "training-sets/H5.jpg",
+						   "training-sets/I5.jpg", "training-sets/J5.jpg", "training-sets/K5.jpg", "training-sets/L5.jpg",
+						   "training-sets/M5.jpg", "training-sets/N5.jpg", "training-sets/O5.jpg", "training-sets/P5.jpg",
+						   "training-sets/Q5.jpg", "training-sets/R5.jpg", "training-sets/S5.jpg", "training-sets/T5.jpg",
+						   "training-sets/U5.jpg", "training-sets/V5.jpg", "training-sets/W5.jpg", "training-sets/X5.jpg",
+						   "training-sets/Y5.jpg", "training-sets/Z5.jpg"};
+
+	QString letters6[26] = {"training-sets/A6.jpg", "training-sets/B6.jpg", "training-sets/C6.jpg", "training-sets/D6.jpg",
+						   "training-sets/E6.jpg", "training-sets/F6.jpg", "training-sets/G6.jpg", "training-sets/H6.jpg",
+						   "training-sets/I6.jpg", "training-sets/J6.jpg", "training-sets/K6.jpg", "training-sets/L6.jpg",
+						   "training-sets/M6.jpg", "training-sets/N6.jpg", "training-sets/O6.jpg", "training-sets/P6.jpg",
+						   "training-sets/Q6.jpg", "training-sets/R6.jpg", "training-sets/S6.jpg", "training-sets/T6.jpg",
+						   "training-sets/U6.jpg", "training-sets/V6.jpg", "training-sets/W6.jpg", "training-sets/X6.jpg",
+						   "training-sets/Y6.jpg", "training-sets/Z6.jpg"};
+
+	QString letters7[26] = {"training-sets/A7.jpg", "training-sets/B7.jpg", "training-sets/C7.jpg", "training-sets/D7.jpg",
+						   "training-sets/E7.jpg", "training-sets/F7.jpg", "training-sets/G7.jpg", "training-sets/H7.jpg",
+						   "training-sets/I7.jpg", "training-sets/J7.jpg", "training-sets/K7.jpg", "training-sets/L7.jpg",
+						   "training-sets/M7.jpg", "training-sets/N7.jpg", "training-sets/O7.jpg", "training-sets/P7.jpg",
+						   "training-sets/Q7.jpg", "training-sets/R7.jpg", "training-sets/S7.jpg", "training-sets/T7.jpg",
+						   "training-sets/U7.jpg", "training-sets/V7.jpg", "training-sets/W7.jpg", "training-sets/X7.jpg",
+						   "training-sets/Y7.jpg", "training-sets/Z7.jpg"};
+
+	QString letters8[26] = {"training-sets/A8.jpg", "training-sets/B8.jpg", "training-sets/C8.jpg", "training-sets/D8.jpg",
+						   "training-sets/E8.jpg", "training-sets/F8.jpg", "training-sets/G8.jpg", "training-sets/H8.jpg",
+						   "training-sets/I8.jpg", "training-sets/J8.jpg", "training-sets/K8.jpg", "training-sets/L8.jpg",
+						   "training-sets/M8.jpg", "training-sets/N8.jpg", "training-sets/O8.jpg", "training-sets/P8.jpg",
+						   "training-sets/Q8.jpg", "training-sets/R8.jpg", "training-sets/S8.jpg", "training-sets/T8.jpg",
+						   "training-sets/U8.jpg", "training-sets/V8.jpg", "training-sets/W8.jpg", "training-sets/X8.jpg",
+						   "training-sets/Y8.jpg", "training-sets/Z8.jpg"};
+
+	QString letters9[26] = {"training-sets/A9.jpg", "training-sets/B9.jpg", "training-sets/C9.jpg", "training-sets/D9.jpg",
+						   "training-sets/E9.jpg", "training-sets/F9.jpg", "training-sets/G9.jpg", "training-sets/H9.jpg",
+						   "training-sets/I9.jpg", "training-sets/J9.jpg", "training-sets/K9.jpg", "training-sets/L9.jpg",
+						   "training-sets/M9.jpg", "training-sets/N9.jpg", "training-sets/O9.jpg", "training-sets/P9.jpg",
+						   "training-sets/Q9.jpg", "training-sets/R9.jpg", "training-sets/S9.jpg", "training-sets/T9.jpg",
+						   "training-sets/U9.jpg", "training-sets/V9.jpg", "training-sets/W9.jpg", "training-sets/X9.jpg",
+						   "training-sets/Y9.jpg", "training-sets/Z9.jpg"};
+
+	QString letters10[26] = {"training-sets/A10.jpg", "training-sets/B10.jpg", "training-sets/C10.jpg", "training-sets/D10.jpg",
+						   "training-sets/E10.jpg", "training-sets/F10.jpg", "training-sets/G10.jpg", "training-sets/H10.jpg",
+						   "training-sets/I10.jpg", "training-sets/J10.jpg", "training-sets/K10.jpg", "training-sets/L10.jpg",
+						   "training-sets/M10.jpg", "training-sets/N10.jpg", "training-sets/O10.jpg", "training-sets/P10.jpg",
+						   "training-sets/Q10.jpg", "training-sets/R10.jpg", "training-sets/S10.jpg", "training-sets/T10.jpg",
+						   "training-sets/U10.jpg", "training-sets/V10.jpg", "training-sets/W10.jpg", "training-sets/X10.jpg",
+						   "training-sets/Y10.jpg", "training-sets/Z10.jpg"};
+
+	QString letters11[26] = {"training-sets/A11.jpg", "training-sets/B11.jpg", "training-sets/C11.jpg", "training-sets/D11.jpg",
+						   "training-sets/E11.jpg", "training-sets/F11.jpg", "training-sets/G11.jpg", "training-sets/H11.jpg",
+						   "training-sets/I11.jpg", "training-sets/J11.jpg", "training-sets/K11.jpg", "training-sets/L11.jpg",
+						   "training-sets/M11.jpg", "training-sets/N11.jpg", "training-sets/O11.jpg", "training-sets/P11.jpg",
+						   "training-sets/Q11.jpg", "training-sets/R11.jpg", "training-sets/S11.jpg", "training-sets/T11.jpg",
+						   "training-sets/U11.jpg", "training-sets/V11.jpg", "training-sets/W11.jpg", "training-sets/X11.jpg",
+						   "training-sets/Y11.jpg", "training-sets/Z11.jpg"};
+*/
 	//image();
 	QImage img = QImage();
 
-	TrainingSet set = TrainingSet();
+/*	TrainingSet set = TrainingSet();
 	TrainingSet set2 = TrainingSet();
 	TrainingSet set3 = TrainingSet();
 	TrainingSet set4 = TrainingSet();
@@ -302,7 +187,7 @@ int main(int argc, char *argv[])
 			QImage cropped = LetterAnalyzer::crop(img);
 			//cropped.save(letters[i]);
 			double* analyzed = LetterAnalyzer::parse(cropped);
-			set3.insertSet(i, analyzed);
+			set.insertSet(z, analyzed);
 			file.write(letters3[i].toLocal8Bit());
 			file.write("\n");
 			for (int j = 0; j < NEURONS_VERTICAL; j++)
@@ -314,9 +199,9 @@ int main(int argc, char *argv[])
 					else
 						file.write("0");
 				}
-				//j++;
 				file.write("\n");
 			}
+			z++;
 		}
 
 		if (img.load(letters4[i]))
@@ -326,6 +211,138 @@ int main(int argc, char *argv[])
 			double* analyzed = LetterAnalyzer::parse(cropped);
 			set.insertSet(z, analyzed);
 			file.write(letters4[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+			z++;
+		}
+
+		if (img.load(letters5[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set.insertSet(z, analyzed);
+			file.write(letters5[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+			z++;
+		}
+
+		if (img.load(letters6[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set.insertSet(z, analyzed);
+			file.write(letters6[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+			z++;
+		}
+
+/*		if (img.load(letters7[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set.insertSet(z, analyzed);
+			file.write(letters7[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+			z++;
+		}
+
+		if (img.load(letters8[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set.insertSet(z, analyzed);
+			file.write(letters8[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+			z++;
+		}
+
+		if (img.load(letters9[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set.insertSet(z, analyzed);
+			file.write(letters9[i].toLocal8Bit());
+			file.write("\n");
+			for (int j = 0; j < NEURONS_VERTICAL; j++)
+			{
+				for (int k = 0; k < NEURONS_HORIZONTAL; k++)
+				{
+					if (analyzed[j*NEURONS_HORIZONTAL+k] > 0.4)
+						file.write("1");
+					else
+						file.write("0");
+				}
+				file.write("\n");
+			}
+			z++;
+		}
+
+		if (img.load(letters10[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			//cropped.save(letters[i]);
+			double* analyzed = LetterAnalyzer::parse(cropped);
+			set.insertSet(z, analyzed);
+			file.write(letters10[i].toLocal8Bit());
 			file.write("\n");
 			for (int j = 0; j < NEURONS_VERTICAL; j++)
 			{
@@ -350,25 +367,47 @@ int main(int argc, char *argv[])
 	trainingSets[2] = set3;
 	trainingSets[3] = set4;*/
 
-	//Kohonen network = Kohonen();
 /*	network.init();*/
 //	network.learn(&set);
 	//network.learn(&set2);
 /*	network.learn(&set3);
 	network.learn(&set4);*/
 
-	Network* network = new Network();
-	network->learn(78, &set);
-	double normalizationFactor = 0.0;
-	if (img.load("training-sets/J3.jpg"))
+//	Network* network = new Network();
+//	network->learn(156, &set);
+/*	double normalizationFactor = 0.0;
+	int testLetters[26];
+	for (int i = 0; i < 26; i++)
 	{
-		QImage cropped = LetterAnalyzer::crop(img);
-		set.insertSet(0, LetterAnalyzer::parse(cropped));
-		cropped.save("training-sets/test/Z.jpg");
-		int letter = network->recognize(set.getSet(0));
+		if (img.load(letters11[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			set.insertSet(0, LetterAnalyzer::parse(cropped));
+			//cropped.save("training-sets/test/Z.jpg");
+//			testLetters[i] = network->recognize(set.getSet(0));
+		}
 	}
+	letters[0];
+
+	for (int i = 0; i < 26; i++)
+	{
+		if (img.load(letters8[i]))
+		{
+			QImage cropped = LetterAnalyzer::crop(img);
+			set.insertSet(0, LetterAnalyzer::parse(cropped));
+			//cropped.save("training-sets/test/Z.jpg");
+//			testLetters[i] = network->recognize(set.getSet(0));
+		}
+	}
+	letters[0];
+	//Mat image = imread("img/Bookman_Old_Style.jpg",0);  //dodaÃ¦ zabezpieczenia: co jak nie siÃª plik Å¸le otworzy
+	//cut_letters(image);
+*/	
+//	Contour cont;
+//	cont.getContour(image);
 	QApplication a(argc, argv);
 	App w;
+	w.readAndPrepareTrainingSetsInfo();
 	w.show();
 	return a.exec();
 }

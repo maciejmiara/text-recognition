@@ -96,13 +96,16 @@ double* LetterAnalyzer::parse(QImage& image)
 	{
 		for (int j = 0; j < NEURONS_HORIZONTAL; j++)
 		{
+			if (i == NEURONS_VERTICAL - 1)
+				topPoint = image.height() - height;
+			if (j == NEURONS_HORIZONTAL - 1)
+				leftPoint = image.width() - width;
 			dataVector[i*NEURONS_HORIZONTAL+j] = (LetterAnalyzer::isPieceofLetter(image, (int)leftPoint, (int)topPoint, (int)width, (int)height)) ? MAX_INPUT : MIN_INPUT;
 			tester = dataVector[i*NEURONS_HORIZONTAL+j];
 			int tester1 = j*horizontalPartSize;
 			int tester2 = i*verticalPartSize;
 
 			leftPoint += width;
-			
 		}
 		leftPoint = 0.0;
 		topPoint += height;

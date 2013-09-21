@@ -60,6 +60,48 @@ Network::Network()
 		errors[i] = new double[neuronsInLayer[i+1]];
 }
 
+Network::~Network()
+{
+	for (int i = 0; i < NEURONS_OUTPUT; i++)
+		delete [] expectedOutput[i];
+	delete [] expectedOutput;
+
+	for (int i = 1; i < LAYERS_NUM; i++)
+		for (int j = 0; j < neuronsInLayer[i]; j++)
+			delete [] weights[i-1][j];
+	for (int i = 1; i < LAYERS_NUM; i++)
+		delete [] weights[i-1];
+	delete [] weights;
+
+	for (int i = 1; i < LAYERS_NUM; i++)
+		for (int j = 0; j < neuronsInLayer[i]; j++)
+			delete [] previousWeights[i-1][j];
+	for (int i = 1; i < LAYERS_NUM; i++)
+		delete [] previousWeights[i-1];
+	delete [] previousWeights;
+
+	for (int i = 1; i < LAYERS_NUM; i++)
+		for (int j = 0; j < neuronsInLayer[i]; j++)
+			delete [] tempWeights[i-1][j];
+	for (int i = 1; i < LAYERS_NUM; i++)
+		delete [] tempWeights[i-1];
+	delete [] tempWeights;
+
+	for (int i = 0; i < LAYERS_NUM-1; i++)
+		delete [] input[i];
+	delete [] input;
+
+	for (int i = 0; i < LAYERS_NUM; i++)
+		delete [] output[i];
+	delete [] output;
+
+	delete [] outputError;
+
+	for (int i = 0; i < LAYERS_NUM-1; i++)
+		delete [] errors[i];
+	delete [] errors;
+}
+
 double Network::vectorLength(int amount, double* vector)
 {
 	double sum = 0.0;
@@ -118,7 +160,7 @@ void Network::generateWeights()
 
 void Network::setInputData(double* data, int expectedResult)
 {
-	currentExpectedResult = expectedResult / 3;
+	currentExpectedResult = expectedResult;
 
 	for (int i = 0; i < NEURONS_INPUT; i++)
 		output[0][i] = data[i];
@@ -167,21 +209,34 @@ void Network::adaptWeights()
 			}
 }
 
-void Network::learn(int amount, TrainingSet* set)
+void Network::learn(int amount, TrainingSet* set, int* expectedResults)
 {
 	clearWeights();
 	generateWeights();
 	
-	for (int i = 0; i < 200; i++)
+	double iterationError = 0.0;
+	double epochError = 0.0;
+
+	// 400 epok, po 200 prezentacji ka¿dej próbki w danej epoce
+	for (int i = 0; i < MAX_LEARNING_EPOCHS; i++)
+	{
 		for (int j = 0; j < amount; j++)
-			for (int k = 0; k < 100; k++)
+			for (int k = 0; k < 200; k++)
 			{
-				setInputData(set->getSet(j), j);
+				setInputData(set->getSet(j), expectedResults[j]);
 				learnPattern();
 				calculateOutputError();
 				backPropagateErrors();
 				adaptWeights();
+				for (int j = 0; j < neuronsInLayer[2]; j++)
+					iterationError += (expectedOutput[currentExpectedResult][j] - output[LAYERS_NUM - 1][j]) * (expectedOutput[currentExpectedResult][j] - output[LAYERS_NUM - 1][j]);
 			}
+		epochError = sqrt(iterationError/(double)(amount * neuronsInLayer[LAYERS_NUM - 1]));
+		iterationError = 0.0;
+
+		if (epochError < QUIT_ERROR)
+			break;
+	}
 }
 
 int Network::recognize(double* pattern)
@@ -200,4 +255,14 @@ int Network::recognize(double* pattern)
 		}
 
 	return bestChoice;
+}
+
+double*** Network::getWeights()
+{
+	return weights;
+}
+
+int* Network::getNeuronsInLayer()
+{
+	return neuronsInLayer;
 }
