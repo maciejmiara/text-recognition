@@ -75,7 +75,7 @@ void App::readAndPrepareTrainingSetsInfo()
 
 	for (int i = 0; i < INPUT_DATA; i++)
 	{
-		img.load(trainingFilesList[i]);
+		bool test = img.load("training-sets/" + trainingFilesList[i]);
 		cropped = LetterAnalyzer::crop(img);
 		double* analyzed = LetterAnalyzer::parse(cropped);
 		trainingSet.insertSet(i, analyzed);

@@ -1,7 +1,7 @@
 #include "app.h"
 #include "LetterAnalyzer.h"
 #include "Network.h"
-//#include "Contour.h"
+#include "Contour.h"
 #include "TrainingSet.h"
 #include <QtWidgets/QApplication>
 #include <qimage.h>

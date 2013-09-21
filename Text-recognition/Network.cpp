@@ -150,7 +150,7 @@ void Network::generateWeights()
 	qsrand((uint)time.msec());
 
 	for (int i = 0; i < LAYERS_NUM-1; i++)
-		for (int j = 0; j < neuronsInLayer[i+1]; i++)
+		for (int j = 0; j < neuronsInLayer[i+1]; j++)
 		{
 			for (int k = 0; k < neuronsInLayer[i]; k++)
 				weights[i][j][k] = qrand() + qrand() - qrand() - qrand();
