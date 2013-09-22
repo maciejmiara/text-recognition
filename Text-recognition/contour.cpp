@@ -1,40 +1,37 @@
 ﻿#include "contour.h"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include <qimage.h>
+#include "LetterAnalyzer.h"
+#include "app.h"
+#include "Network.h"
 
+using namespace cv;
 
-class comparator{
-public:
-    bool operator()(vector<Point> c1,vector<Point>c2)
-	{
-		return ((boundingRect( Mat(c1)).x<boundingRect( Mat(c2)).x));// && (boundingRect( Mat(c1)).y>boundingRect( Mat(c2)).y));
-	}
-};
-
-
-void Contour::extractContours(Mat& image,vector< vector<Point> > contours_poly)
+int* Contour::extractContours(Mat& image,vector< vector<Point> > contours_poly, int& amount, Network* network)
 {
     vector< vector<Point> > tmp_poly;
-	//Sortowanie konturów 
-
-	//BŁĄD!
+	//Sortowanie konturów wg x, a potem y 
+	
 	double gap = (contours_poly[0][0].y)/4;
 	int n = contours_poly.size();
 	do
 	{
 		for( int a = 0; a<n-1; a++ )
 		{
-		//	double tmp1 = sqrt(double((contours_poly[a][0].x*(contours_poly[a][0].x)) + ((contours_poly[a][0].y)*(contours_poly[a][0].y))));
-			//double tmp2 = sqrt(double((contours_poly[a+1][0].x*(contours_poly[a+1][0].x)) + ((contours_poly[a+1][0].y)*(contours_poly[a+1][0].y))));
-			//if (tmp1 >= tmp2)
-			if (((contours_poly[a][0].x) <= (contours_poly[a+1][0].x)) && ((contours_poly[a][0].y-gap) <= ((contours_poly[a+1][0].y))))
+		    if (((contours_poly[a][0].x) <= (contours_poly[a+1][0].x)) && ((contours_poly[a][0].y-gap) <= ((contours_poly[a+1][0].y))))
 			{
 				swap(contours_poly[a], contours_poly[a+1]);
 			}
 		}
 		n = n - 1;
 	} while (n>0);
-	//sort(contours_poly.begin(),contours_poly.end(),comparator());
+	
+	amount = contours_poly.size() - 1;
+	int* recognizedLetters = new int[amount];
+	int j = 0;
 
-	for( int i = 0; i< contours_poly.size(); i++ )
+	for( int i = contours_poly.size() - 1; i >= 0; i-- )
 	{
  
         Rect r = boundingRect( Mat(contours_poly[i]) );
@@ -50,33 +47,39 @@ void Contour::extractContours(Mat& image,vector< vector<Point> > contours_poly)
         image.copyTo(extractPic,mask);
         Mat resizedPic = extractPic(r);
 
-       bitwise_not(resizedPic, resizedPic); //kontrast bo cv używa czarnego jako tła
+        bitwise_not(resizedPic, resizedPic); //kontrast bo cv używa czarnego jako tła
         //zapisywanie
-		stringstream file;
+		/*stringstream file;
 		
 		file<<"letters/"<<(contours_poly.size()-i)<<".jpg";
-        imwrite(file.str(),resizedPic);
+        imwrite(file.str(),resizedPic);*/
 
- 
+		QImage qimg(resizedPic.data, resizedPic.cols, resizedPic.rows, resizedPic.step, QImage::Format_RGB888);
+		qimg.save("test.jpg");
+		qimg = LetterAnalyzer::crop(qimg);
+		double* analyzed = LetterAnalyzer::parse(qimg);
+		recognizedLetters[j++] = network->recognize(analyzed);
     }
+
+	return recognizedLetters;
 }
 
 
 
-void Contour::getContour(Mat img)
+int* Contour::getContour(Mat img, int& amount, Network* network)
 {
-	//problem z plikami o ma³ej rozdzielczoœci!
+	//problem z plikami o malej rozdzielczości!
 
-	//zamiana na czarno-bia³y
+	//zamiana na czarno-bialy
 	Size size(3,3); 
 	GaussianBlur(img,img,size,0); //zamglenie
     adaptiveThreshold(img, img,255,CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY,75,10); //progowanie
-    bitwise_not(img, img); //kontrast bo cv uzywa czarnego jako t³a
+    bitwise_not(img, img); //kontrast bo cv uzywa czarnego jako tla
  
 	//kopia
 	Mat img2 = img.clone();
  
-	//wycinamy zbêdne t³o
+	//wycinamy zbedne tlo
 
 	vector<Point> points;
     Mat_<uchar>::iterator it = img.begin<uchar>();
@@ -99,7 +102,7 @@ void Contour::getContour(Mat img)
  
     Mat rot_mat = getRotationMatrix2D(box.center, angle, 1);
  
-	//przekszta³cenie afiniczne
+	//przeksztalcenie afiniczne
 	Mat rotated;
 	warpAffine(img2, rotated, rot_mat, img.size(), INTER_CUBIC);
  
@@ -170,7 +173,7 @@ void Contour::getContour(Mat img)
     }
  
  
-    //wyœwirtlanie konturów
+    //wyswietlanie konturów
 	Scalar color = Scalar(0,255,0);
 	for( int i = 0; i< validContours.size(); i++ )
 		{
@@ -179,10 +182,7 @@ void Contour::getContour(Mat img)
 		drawContours( cropped2, validContours, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
 		rectangle( cropped2, boundRect[i].tl(), boundRect[i].br(),color, 2, 8, 0 );
 		}
-	
-	imshow("test", cropped2);
-	extractContours(cropped3,validContours);
 
-
+	return extractContours(cropped3,validContours, amount, network);
 }
 

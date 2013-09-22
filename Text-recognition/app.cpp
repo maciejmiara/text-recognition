@@ -7,6 +7,10 @@
 #include <qtextstream.h>
 #include <qfiledialog.h>
 #include "LetterAnalyzer.h"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+
+using namespace cv;
 
 App::App(QWidget *parent)
 	: QMainWindow(parent)
@@ -22,6 +26,7 @@ App::~App()
 
 void App::init()
 {
+	int amount = 0;
 	ui.recognize->setEnabled(false);
 	ui.saveWeights->setEnabled(false);
 	connectEverything();
@@ -98,6 +103,11 @@ void App::testNetwork()
 	}
 }
 
+Network* App::getNetwork()
+{
+	return &network;
+}
+
 void App::readWeights()
 {
 	QFile file("weights.txt");
@@ -126,7 +136,7 @@ void App::readWeights()
 void App::saveWeights()
 {
 	QFile file("weights.txt");
-	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
 	{
 		//handle error
 	}
@@ -137,15 +147,29 @@ void App::saveWeights()
 		for (int j = 0; j < neuronsInLayer[i+1]; j++)
 			for (int k = 0; k < neuronsInLayer[i]; k++)
 			{
-				file.write(QString::number(network.getWeights()[i][j][k], 'g', 10).toLocal8Bit());
+				file.write(QString::number(network.getWeights()[i][j][k], 'g', 14).toLocal8Bit());
 				file.write("\n");
 			}
 
+	file.close();
 }
 
 void App::recognize()
 {
+	int amount = 0;
+	Mat image = imread(imageFile.toStdString(), 0);
+	int* recognizedLetters = imageParser.getContour(image, amount, &network);
 
+	QFile file(resultFile);
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+	{
+		//handle error
+	}
+
+	for (int i = 0; i < amount; i++)
+		file.write(QString(recognizedLetters[i] + 'A').toLocal8Bit());
+
+	file.close();
 }
 
 void App::learn()
@@ -154,6 +178,7 @@ void App::learn()
 	network.learn(INPUT_DATA, &trainingSet, trainingLetters);
 	testNetwork();
 	networkTrained = true;
+	ui.saveWeights->setEnabled(true);
 }
 
 void App::getImagePath()

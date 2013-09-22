@@ -5,6 +5,7 @@
 #include "ui_app.h"
 #include "globals.h"
 #include "Network.h"
+#include "contour.h"
 
 class App : public QMainWindow
 {
@@ -20,10 +21,12 @@ public:
 	void initTrainingLetters();
 	void randomizeTrainingSet();
 	void testNetwork();
+	Network* getNetwork();
 
 private:
 	Ui::AppClass ui;
 	Network network;
+	Contour imageParser;
 	QStringList trainingFilesList;
 	QStringList testFilesList;
 	int trainingLetters[INPUT_DATA];
