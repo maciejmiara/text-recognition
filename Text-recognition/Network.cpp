@@ -150,7 +150,7 @@ void Network::generateWeights()
 	qsrand((uint)time.msec());
 
 	for (int i = 0; i < LAYERS_NUM-1; i++)
-		for (int j = 0; j < neuronsInLayer[i+1]; i++)
+		for (int j = 0; j < neuronsInLayer[i+1]; j++)
 		{
 			for (int k = 0; k < neuronsInLayer[i]; k++)
 				weights[i][j][k] = qrand() + qrand() - qrand() - qrand();
@@ -216,6 +216,7 @@ void Network::learn(int amount, TrainingSet* set, int* expectedResults)
 	
 	double iterationError = 0.0;
 	double epochError = 0.0;
+	double minEpochError = 1.0;
 
 	// 400 epok, po 200 prezentacji ka¿dej próbki w danej epoce
 	for (int i = 0; i < MAX_LEARNING_EPOCHS; i++)
@@ -233,6 +234,9 @@ void Network::learn(int amount, TrainingSet* set, int* expectedResults)
 			}
 		epochError = sqrt(iterationError/(double)(amount * neuronsInLayer[LAYERS_NUM - 1]));
 		iterationError = 0.0;
+
+		if (epochError < minEpochError)
+			minEpochError = epochError;
 
 		if (epochError < QUIT_ERROR)
 			break;
