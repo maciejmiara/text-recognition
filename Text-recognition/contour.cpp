@@ -1,5 +1,6 @@
 ﻿#include "contour.h"
 
+
 class comparator{
 public:
     bool operator()(vector<Point> c1,vector<Point>c2)
@@ -15,11 +16,23 @@ void Contour::extractContours(Mat& image,vector< vector<Point> > contours_poly)
 	//Sortowanie konturów 
 
 	//BŁĄD!
-	sort(contours_poly.begin(),contours_poly.end(),comparator());
-	
-	//Tablica "contours_poly" nie chce się usortować porządnie
-	//Tutaj jest dokumentacja tej funkcji:
-	//http://docs.opencv.org/modules/core/doc/operations_on_arrays.html#void%20sort%28InputArray%20src,%20OutputArray%20dst,%20int%20flags%29
+	double gap = (contours_poly[0][0].y)/4;
+	int n = contours_poly.size();
+	do
+	{
+		for( int a = 0; a<n-1; a++ )
+		{
+		//	double tmp1 = sqrt(double((contours_poly[a][0].x*(contours_poly[a][0].x)) + ((contours_poly[a][0].y)*(contours_poly[a][0].y))));
+			//double tmp2 = sqrt(double((contours_poly[a+1][0].x*(contours_poly[a+1][0].x)) + ((contours_poly[a+1][0].y)*(contours_poly[a+1][0].y))));
+			//if (tmp1 >= tmp2)
+			if (((contours_poly[a][0].x) <= (contours_poly[a+1][0].x)) && ((contours_poly[a][0].y-gap) <= ((contours_poly[a+1][0].y))))
+			{
+				swap(contours_poly[a], contours_poly[a+1]);
+			}
+		}
+		n = n - 1;
+	} while (n>0);
+	//sort(contours_poly.begin(),contours_poly.end(),comparator());
 
 	for( int i = 0; i< contours_poly.size(); i++ )
 	{
@@ -41,7 +54,7 @@ void Contour::extractContours(Mat& image,vector< vector<Point> > contours_poly)
         //zapisywanie
 		stringstream file;
 		
-		file<<"letters/"<<(i+1)<<".jpg";
+		file<<"letters/"<<(contours_poly.size()-i)<<".jpg";
         imwrite(file.str(),resizedPic);
 
  
