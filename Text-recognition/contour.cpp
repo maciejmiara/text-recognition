@@ -4,16 +4,23 @@ class comparator{
 public:
     bool operator()(vector<Point> c1,vector<Point>c2)
 	{
-		return boundingRect( Mat(c1)).x<boundingRect( Mat(c2)).x;
+		return ((boundingRect( Mat(c1)).x<boundingRect( Mat(c2)).x));// && (boundingRect( Mat(c1)).y>boundingRect( Mat(c2)).y));
 	}
 };
 
+
 void Contour::extractContours(Mat& image,vector< vector<Point> > contours_poly)
 {
- 
-	//Sortowanie konturów od lewej do prawej wg x
+    vector< vector<Point> > tmp_poly;
+	//Sortowanie konturów 
+
+	//BŁĄD!
 	sort(contours_poly.begin(),contours_poly.end(),comparator());
- 
+	
+	//Tablica "contours_poly" nie chce się usortować porządnie
+	//Tutaj jest dokumentacja tej funkcji:
+	//http://docs.opencv.org/modules/core/doc/operations_on_arrays.html#void%20sort%28InputArray%20src,%20OutputArray%20dst,%20int%20flags%29
+
 	for( int i = 0; i< contours_poly.size(); i++ )
 	{
  
@@ -24,22 +31,6 @@ void Contour::extractContours(Mat& image,vector< vector<Point> > contours_poly)
         //Rysowanie maski
         drawContours(mask, contours_poly, i, Scalar(255), CV_FILLED);
  
-        //Wyszukiwanie liter z³o¿onych z dwóch znaków, np. "i"
-		if(i+1<contours_poly.size())
-		{
-            Rect r2 = boundingRect( Mat(contours_poly[i+1]) );
-            if(abs(r2.x-r.x)<10)
-			{
-                drawContours(mask, contours_poly, i+1, Scalar(255), CV_FILLED);
-                i++;
-                int minX = min(r.x,r2.x);
-                int minY = min(r.y,r2.y);
-                int maxX =  max(r.x+r.width,r2.x+r2.width);
-                int maxY = max(r.y+r.height,r2.y+r2.height);
-                r = Rect(minX,minY,maxX - minX,maxY-minY);
-			}
-        }
-
         //wycinanie znaków
         Mat extractPic;
                 
@@ -67,7 +58,7 @@ void Contour::getContour(Mat img)
 	Size size(3,3); 
 	GaussianBlur(img,img,size,0); //zamglenie
     adaptiveThreshold(img, img,255,CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY,75,10); //progowanie
-    bitwise_not(img, img); //kontrast bo cv u¿ywa czarnego jako t³a
+    bitwise_not(img, img); //kontrast bo cv uzywa czarnego jako t³a
  
 	//kopia
 	Mat img2 = img.clone();
@@ -81,7 +72,7 @@ void Contour::getContour(Mat img)
        if (*it)
           points.push_back(it.pos());
 
-    //rysujemy linie pomocnicz¹ do wycinania
+    //rysujemy linie pomocnicza do wycinania
     RotatedRect box = minAreaRect(Mat(points));
  
 	double angle = box.angle;
@@ -99,13 +90,12 @@ void Contour::getContour(Mat img)
 	Mat rotated;
 	warpAffine(img2, rotated, rot_mat, img.size(), INTER_CUBIC);
  
-	//wycinami œrodek
+	//wycinami srodek
 	Size box_size = box.size;
 	  if (box.angle < -45.)
 		swap(box_size.width, box_size.height);
 	Mat cropped;
 	getRectSubPix(rotated, box_size, box.center, cropped);
-	//imshow("Wynik", cropped);
 	
 	 Mat cropped2=cropped.clone();
 	cvtColor(cropped2,cropped2,CV_GRAY2RGB);
@@ -113,29 +103,27 @@ void Contour::getContour(Mat img)
 	Mat cropped3 = cropped.clone();
 	cvtColor(cropped3,cropped3,CV_GRAY2RGB);
 
-	//imshow("Wynik", cropped3);
-	
 	vector<vector<Point> > contours;
 	vector<Vec4i> hierarchy;
  
 	//szukanie konturów
-	findContours( cropped, contours, hierarchy,CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE, Point(0, 0) );
+	findContours( cropped, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_KCOS, Point(0, 0) );
 	
-	///tworzenie z konturów wielok¹tów
+	///tworzenie z konturów wielokatów
 	vector<vector<Point> > contours_poly( contours.size() );
 	vector<Rect> boundRect( contours.size() );
 	vector<Point2f>center( contours.size() );
 	vector<float>radius( contours.size() );
  
- 
-	//pobieranie konturów wielok¹tów
+    
+	//pobieranie konturów wielokatów
 	for( int i = 0; i < contours.size(); i++ )
 	{
 		approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
 	}
  
  
-	//pobiera tylko najwa¿niejszych konturów
+	//pobiera tylko najwazniejszych konturów
 	vector<vector<Point> > validContours;
     for (int i=0;i<contours_poly.size();i++)
 	{
@@ -146,24 +134,24 @@ void Contour::getContour(Mat img)
         bool inside = false;
         for(int j=0;j<contours_poly.size();j++)
 		{
-                if (j==i)
-					continue;
+            if (j==i)
+				continue;
                        
-                Rect r2 = boundingRect(Mat(contours_poly[j]));
-                if (r2.area()<10||r2.area()<r.area())
-					continue;
+            Rect r2 = boundingRect(Mat(contours_poly[j]));
+            if (r2.area()<10||r2.area()<r.area())
+				continue;
 
-                if(r.x>r2.x && r.x+r.width<r2.x+r2.width && r.y>r2.y && r.y+r.height< r2.y+r2.height)
-				{
-					inside = true;
-                }
+            if(r.x>r2.x && r.x+r.width<r2.x+r2.width && r.y>r2.y && r.y+r.height< r2.y+r2.height)
+			{
+				inside = true;
+            }
         }
         if(inside)continue;
         validContours.push_back(contours_poly[i]);
     }
  
  
-    //pobieranie granic prostok¹tów
+    //pobieranie granic prostokatów
     for(int i=0;i<validContours.size();i++){
             boundRect[i] = boundingRect( Mat(validContours[i]) );
     }
@@ -178,9 +166,10 @@ void Contour::getContour(Mat img)
 		drawContours( cropped2, validContours, i, color, 1, 8, vector<Vec4i>(), 0, Point() );
 		rectangle( cropped2, boundRect[i].tl(), boundRect[i].br(),color, 2, 8, 0 );
 		}
- 
+	
+	imshow("test", cropped2);
 	extractContours(cropped3,validContours);
 
-	imshow("test", cropped2);
+
 }
 
