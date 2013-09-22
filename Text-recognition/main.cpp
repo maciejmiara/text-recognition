@@ -388,7 +388,7 @@ int main(int argc, char *argv[])
 	//pobieranie pliku do czytania
 	//poszczególny literki zostaną zapisane w fodlerze "letters" jako numerLiterki.jpg czyli "1.jpg", "2.jpg", itd.
 	//Numeracja zaczyna się od "1".
-	Mat image = imread("img/test.jpg",0);  //dodać zabezpieczenia: co jak nie się plik źle otworzy?
+	Mat image = imread("img/test1.jpg",0);  //dodać zabezpieczenia: co jak nie się plik źle otworzy?
 	Contour cont;
 	cont.getContour(image);
 	QApplication a(argc, argv);
