@@ -27,7 +27,7 @@ int* Contour::extractContours(Mat& image,vector< vector<Point> > contours_poly, 
 		n = n - 1;
 	} while (n>0);
 	
-	amount = contours_poly.size() - 1;
+	amount = contours_poly.size();
 	int* recognizedLetters = new int[amount];
 	int j = 0;
 

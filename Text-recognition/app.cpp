@@ -6,6 +6,7 @@
 #include <qfile.h>
 #include <qtextstream.h>
 #include <qfiledialog.h>
+#include <qmessagebox.h>
 #include "LetterAnalyzer.h"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -80,7 +81,7 @@ void App::readAndPrepareTrainingSetsInfo()
 
 	for (int i = 0; i < INPUT_DATA; i++)
 	{
-		bool test = img.load("training-sets/" + trainingFilesList[i]);
+		img.load("training-sets/" + trainingFilesList[i]);
 		cropped = LetterAnalyzer::crop(img);
 		double* analyzed = LetterAnalyzer::parse(cropped);
 		trainingSet.insertSet(i, analyzed);
@@ -96,7 +97,7 @@ void App::testNetwork()
 
 	for (int i = 0; i < TEST_DATA; i++)
 	{
-		bool test = img.load("test-sets/" + testFilesList[i]);
+		img.load("test-sets/" + testFilesList[i]);
 		cropped = LetterAnalyzer::crop(img);
 		double* analyzed = LetterAnalyzer::parse(cropped);
 		testResults[i] =  network.recognize(analyzed);
@@ -113,7 +114,8 @@ void App::readWeights()
 	QFile file("weights.txt");
 	if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
-		//handle error
+		QMessageBox::warning(this, "Blad", "Nie mozna odczytac pliku z wagami!");
+		return;
 	}
 
 	int* neuronsInLayer = network.getNeuronsInLayer();
@@ -138,7 +140,8 @@ void App::saveWeights()
 	QFile file("weights.txt");
 	if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
 	{
-		//handle error
+		QMessageBox::warning(this, "Blad", "Nie mozna zapisac pliku z wagami!");
+		return;
 	}
 
 	int* neuronsInLayer = network.getNeuronsInLayer();
@@ -156,6 +159,8 @@ void App::saveWeights()
 
 void App::recognize()
 {
+	testNetwork();
+
 	int amount = 0;
 	Mat image = imread(imageFile.toStdString(), 0);
 	int* recognizedLetters = imageParser.getContour(image, amount, &network);
@@ -163,13 +168,16 @@ void App::recognize()
 	QFile file(resultFile);
 	if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
 	{
-		//handle error
+		QMessageBox::warning(this, "Blad", "Nie mozna odczytac pliku wynikowego!");
+		return;
 	}
 
 	for (int i = 0; i < amount; i++)
 		file.write(QString(recognizedLetters[i] + 'A').toLocal8Bit());
 
 	file.close();
+
+	QMessageBox::information(this, "Info", "Rozpoznawanie zostalo zakonczone");
 }
 
 void App::learn()
@@ -179,11 +187,14 @@ void App::learn()
 	testNetwork();
 	networkTrained = true;
 	ui.saveWeights->setEnabled(true);
+	QMessageBox::information(this, "Info", "Uczenie zostalo zakonczone");
 }
 
 void App::getImagePath()
 {
 	imageFile = QFileDialog::getOpenFileName(this, "Open file", "", "Image Files(*.jpg)");
+	if (imageFile.isEmpty())
+		return;
 	ui.imagePath->setText(imageFile);
 	if (!ui.recognize->isEnabled() && !resultFile.isEmpty() && networkTrained)
 		ui.recognize->setEnabled(true);
@@ -192,6 +203,8 @@ void App::getImagePath()
 void App::getResultPath()
 {
 	resultFile = QFileDialog::getOpenFileName(this, "Open file", "", "Text Files(*.txt)");
+	if (resultFile.isEmpty())
+		return;
 	ui.resultPath->setText(resultFile);
 	if (!ui.recognize->isEnabled() && !imageFile.isEmpty() && networkTrained)
 		ui.recognize->setEnabled(true);
